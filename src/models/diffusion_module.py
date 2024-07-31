@@ -11,7 +11,7 @@ class DiffusionModule(L.LightningModule):
     def __init__(
         self, 
         diffusion_model: UnconditionalDiffusion, 
-        optimizer, 
+        optimizer: torch.optim, 
     ): 
         super(DiffusionModule, self).__init__()
         self.diffusion_model = diffusion_model
@@ -49,4 +49,4 @@ class DiffusionModule(L.LightningModule):
         self.log("test/mae", mae, on_step=True, on_epoch=True, prog_bar=True, sync_dist=True)
     
     def configure_optimizers(self):
-        return self.optimizer(self.parameters())
+        return self.optimizer(self.parameters(), 1e-4)
