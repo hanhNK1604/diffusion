@@ -7,7 +7,7 @@ defaults:
   - data: datamodule
   - model: diffusion_module
   - callbacks: null 
-  - logger: null # set logger here or use command line (e.g. `python train.py logger=tensorboard`)
+  - logger: wandb # set logger here or use command line (e.g. `python train.py logger=tensorboard`)
   - trainer: default
   - paths: default
   - extras: default
@@ -40,10 +40,10 @@ train: True
 
 # evaluate on test set, using best model weights achieved during training
 # lightning chooses best weights based on the metric specified in checkpoint callback
-test: True
+# test: True
 
 # simply provide checkpoint path to resume training
-ckpt_path: null
+# ckpt_path: ${paths.log_dir}/train/runs/2024-08-01_17-58-04/diffusion_1_8/kuzorpjl/checkpoints/epoch=25-step=182000.ckpt
 
 # seed for random number generators in pytorch, numpy and python.random
 seed: null

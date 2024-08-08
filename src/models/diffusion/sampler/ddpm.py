@@ -3,27 +3,27 @@ rootutils.setup_root(search_from=__file__, indicator='.project-root', pythonpath
 
 import torch 
 from tqdm import tqdm 
-
-from src.models.diffusion_module import DiffusionModule 
+from src.models.diffusion.net.unconditional_diffusion import UnconditionalDiffusion 
 
 class DDPMSampler: 
     def __init__(
         self, 
-        diffusion_module: DiffusionModule, 
+        diffusion_model: UnconditionalDiffusion, 
         num_samples: int,
         image_size: int, 
         channels: int, 
+        reduce_steps: int, 
         step_collect: int, 
-        device: str  
+        device: str 
     ): 
-        self.diffusion_module = diffusion_module
+        self.diffusion_model = diffusion_model.to(torch.device(device))
         self.num_samples = num_samples 
         self.image_size = image_size 
         self.channels = channels 
+        self.reduce_steps = reduce_steps 
         self.step_collect = step_collect
         self.device = torch.device(device) 
 
-        self.diffusion_model = diffusion_module.diffusion_model.to(self.device)
         self.denoise_net = self.diffusion_model.denoise_net.to(self.device)
 
         self.time_steps = self.diffusion_model.time_steps 
@@ -33,13 +33,15 @@ class DDPMSampler:
         self.sqrt_alpha_bar = self.diffusion_model.sqrt_alpha_bar.to(self.device) 
         self.sqrt_one_minus_alpha_bar = self.diffusion_model.sqrt_one_minus_alpha_bar.to(self.device)
     
-    def reverse_process(self): 
+    def reverse_process(self, batch_size=None):
+        if batch_size == None: 
+            batch_size = self.num_samples 
         self.denoise_net.eval()
         with torch.no_grad(): 
             collection = []
-            x = torch.randn(size=(self.num_samples, self.channels, self.image_size, self.image_size), device=self.device)
+            x = torch.randn(size=(batch_size, self.channels, self.image_size, self.image_size), device=self.device)
             for i in tqdm(reversed(range(self.time_steps))): 
-                t = (torch.ones(self.num_samples) * i).long().to(self.device) 
+                t = (torch.ones(batch_size) * i).long().to(self.device) 
 
                 pred_noise = self.denoise_net(x, t) 
                 alphas = self.alphas[t][:, None, None, None] 
