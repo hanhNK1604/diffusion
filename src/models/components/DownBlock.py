@@ -6,13 +6,14 @@ from src.models.components.ResBlock import ResBlock
 import torch
 
 class DownBlock(nn.Module):
-    def __init__(self, inp_ch, out_ch, t_emb_dim=256, c_emb_dim=256):
+    def __init__(self, in_ch, out_ch, t_emb_dim=256, c_emb_dim=256):
         super(DownBlock, self).__init__()
 
         self.down = nn.Sequential(
             nn.MaxPool2d(kernel_size=2, stride=2),
-            ResBlock(inp_ch=inp_ch, out_ch=inp_ch, residual=True),
-            ResBlock(inp_ch=inp_ch, out_ch=out_ch)
+            ResBlock(in_ch=in_ch, out_ch=in_ch),
+            ResBlock(in_ch=in_ch, out_ch=out_ch),
+            ResBlock(in_ch=out_ch, out_ch=out_ch)
         )
 
         self.t_emb_layers = nn.Sequential(
@@ -24,6 +25,7 @@ class DownBlock(nn.Module):
             nn.SiLU(), 
             nn.Linear(in_features=c_emb_dim, out_features=out_ch)
         )
+
 
     def forward(self, x, t, c=None):
         """
@@ -46,5 +48,5 @@ class DownBlock(nn.Module):
 # x = torch.rand(size=(32, 64, 128, 128))
 # t = torch.rand(size=(32, 256))
 # c = torch.rand(size=(32, 256))
-# net = DownBlock(inp_ch=64, out_ch=128)
+# net = DownBlock(in_ch=64, out_ch=128)
 # print(net(x, t, c).shape)

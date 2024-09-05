@@ -5,7 +5,7 @@ diffusion_model:
 
   denoise_net: 
     _target_: src.models.components.UNet.UNet
-    inp_ch: 1 
+    in_ch: 1 
     t_emb_dim: 256 
     c_emb_dim: 256 
     num_classes: 10 

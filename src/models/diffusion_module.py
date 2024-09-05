@@ -63,7 +63,7 @@ class DiffusionModule(L.LightningModule):
         x, label = batch 
         self.sampler.denoise_net = self.diffusion_model.denoise_net 
         bs = x.shape[0]
-        fake_images, collection = self.sampler.reverse_process_condition(batch_size=bs, label=label, w=3.0) 
+        fake_images, collection = self.sampler.reverse_process_condition(batch_size=bs, c=label, w=3.0) 
         real_images = x
 
         fake_images = fake_images.clamp(0, 1).repeat(1, 3, 1, 1) 
@@ -81,7 +81,7 @@ class DiffusionModule(L.LightningModule):
         label = torch.tensor([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]) 
         grid = []
         for i in range(10): 
-            sample_images, collection = self.sampler.reverse_process_condition(batch_size=10, label=label, w=3.0)  
+            sample_images, collection = self.sampler.reverse_process_condition(batch_size=10, c=label, w=3.0)  
             grid.append(sample_images)
         
         grid = torch.cat(grid, dim=0)
@@ -97,7 +97,7 @@ class DiffusionModule(L.LightningModule):
         x, label = batch 
         self.sampler.denoise_net = self.diffusion_model.denoise_net 
         bs = x.shape[0] 
-        fake_images, _ = self.sampler.reverse_process_condition(w=3.0, batch_size=bs, label=label)
+        fake_images, _ = self.sampler.reverse_process_condition(w=3.0, batch_size=bs, c=label)
         real_images = x 
 
         fake_images = fake_images.clamp(0, 1).repeat(1, 3, 1, 1) 
@@ -108,7 +108,6 @@ class DiffusionModule(L.LightningModule):
         
         fid = self.metric.compute()
         self.log('test/fid', fid, on_step=False, on_epoch=True) 
-
 
     
     def configure_optimizers(self):

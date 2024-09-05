@@ -8,50 +8,49 @@ from src.models.components.ResBlock import ResBlock
 from src.models.components.DownBlock import DownBlock
 from src.models.components.SelfAttentionBlock import SelfAttentionBlock
 from src.models.components.UpBlock import UpBlock
+from src.models.components.LabelEmbedding import LabelEmbedding  # type: ignore
 
 
 class UNet(nn.Module):
     def __init__(
         self,
-        inp_ch,
+        in_ch,
         t_emb_dim: int = 256,
-        c_emb_dim: int = 256, 
-        num_classes = None,   
+        type_condition: str = None  
     ):
         super(UNet, self).__init__()
 
-        self.inp_ch = inp_ch
+        self.in_ch = in_ch
         self.t_emb_dim = t_emb_dim
-        self.c_emb_dim = c_emb_dim 
+        
+        if type_condition == 'label': 
+            self.embedder = LabelEmbedding(num_embeds=10, emb_dim=t_emb_dim)
 
-        if num_classes != None: 
-            self.num_classes = num_classes 
-            self.embedder = nn.Embedding(self.num_classes, self.c_emb_dim) 
 
-        self.inp = ResBlock(inp_ch=inp_ch, out_ch=64)
+        self.inp = ResBlock(in_ch=in_ch, out_ch=64)
 
-        self.down1 = DownBlock(inp_ch=64, out_ch=128)
+        self.down1 = DownBlock(in_ch=64, out_ch=128)
         self.sa1 = SelfAttentionBlock(channels=128)
-        self.down2 = DownBlock(inp_ch=128, out_ch=256)
+        self.down2 = DownBlock(in_ch=128, out_ch=256)
         self.sa2 = SelfAttentionBlock(channels=256)
-        self.down3 = DownBlock(inp_ch=256, out_ch=256)
+        self.down3 = DownBlock(in_ch=256, out_ch=256)
         self.sa3 = SelfAttentionBlock(channels=256)
 
-        self.lat1 = ResBlock(inp_ch=256, out_ch=512)
+        self.lat1 = ResBlock(in_ch=256, out_ch=512)
         self.sa_la1 = SelfAttentionBlock(channels=512)
-        self.lat2 = ResBlock(inp_ch=512, out_ch=512)
+        self.lat2 = ResBlock(in_ch=512, out_ch=512)
         self.sa_la2 = SelfAttentionBlock(channels=512)
-        self.lat3 = ResBlock(inp_ch=512, out_ch=256)
+        self.lat3 = ResBlock(in_ch=512, out_ch=256)
 
-        self.up1 = UpBlock(inp_ch=512, out_ch=128)
+        self.up1 = UpBlock(in_ch=512, out_ch=128)
         self.sa4 = SelfAttentionBlock(channels=128)
-        self.up2 = UpBlock(inp_ch=256, out_ch=64)
+        self.up2 = UpBlock(in_ch=256, out_ch=64)
         self.sa5 = SelfAttentionBlock(channels=64)
-        self.up3 = UpBlock(inp_ch=128, out_ch=64)
+        self.up3 = UpBlock(in_ch=128, out_ch=64)
         self.sa6 = SelfAttentionBlock(channels=64)
 
 
-        self.out = nn.Conv2d(in_channels=64, out_channels=inp_ch, kernel_size=1)
+        self.out = nn.Conv2d(in_channels=64, out_channels=in_ch, kernel_size=1)
 
     def position_embeddings(self, t, channels):
         i = 1 / (10000 ** (torch.arange(start=0, end=channels, step=2) / channels)).to(t.device)
@@ -94,10 +93,10 @@ class UNet(nn.Module):
 
 #test 
 
-# net = UNet(inp_ch=1, num_classes=10)
+# net = UNet(in_ch=1, type_condition='label')
 
-# x = torch.rand(size=(10, 1, 64, 64)) 
+# x = torch.rand(size=(10, 1, 32, 32)) 
 # t = torch.rand(size=(10,)) 
 # c = torch.randint(low=0, high=10, size=(10,)) 
 
-# print(net(x, t, c).shape)
+# print(net(x, t).shape)

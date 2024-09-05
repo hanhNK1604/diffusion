@@ -67,9 +67,9 @@ class DDIMSampler:
             
             return x, collection 
     
-    def reverse_process_condition(self, w, label, batch_size=None): 
+    def reverse_process_condition(self, w, c, batch_size=None): 
         w = torch.tensor([w]).to(self.device)
-        label = label.to(self.device) 
+        c = c.to(self.device) 
 
         if batch_size == None: 
             batch_size = self.num_samples 
@@ -83,9 +83,9 @@ class DDIMSampler:
                     t = (torch.ones(size=(batch_size,)) * self.tau[i]).long().to(self.device)
                     t_prev = (torch.ones(size=(batch_size,)) * self.tau[i + 1]).long().to(self.device)
 
-                    pred_x0_no_cond = self.denoise_net(x, t)    
-                    pred_x0_with_cond = self.denoise_net(x, t, c=label)
-                    final_noise_pred = (1 + w) * pred_x0_with_cond - w * pred_x0_no_cond 
+                    pred_noise_no_cond = self.denoise_net(x, t)    
+                    pred_noise_with_cond = self.denoise_net(x, t, c=c)
+                    final_noise_pred = (1 + w) * pred_noise_with_cond - w * pred_noise_no_cond 
 
                     alpha_bar = self.alpha_bar[t][:, None, None, None ]
                     alpha_bar_prev = self.alpha_bar[t_prev][:, None, None, None] 
@@ -97,9 +97,9 @@ class DDIMSampler:
                 else: 
                     t = (torch.ones(size=(batch_size,)) * self.tau[i]).long().to(self.device)
 
-                    pred_x0_no_cond = self.denoise_net(x, t, c=None)  
-                    pred_x0_with_cond = self.denoise_net(x, t, c=label)
-                    final_noise_pred = (1 + w) * pred_x0_with_cond - w * pred_x0_no_cond 
+                    pred_noise_no_cond = self.denoise_net(x, t, c=None)  
+                    pred_noise_with_cond = self.denoise_net(x, t, c=c)
+                    final_noise_pred = (1 + w) * pred_noise_with_cond - w * pred_noise_no_cond 
 
                     alpha_bar = self.alpha_bar[t][:, None, None, None ]
                     alpha_bar_prev = self.alpha_bar[t_prev][:, None, None, None] 

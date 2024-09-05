@@ -7,11 +7,12 @@ import rootutils
 rootutils.setup_root(__file__, indicator='.project-root', pythonpath=True) 
 
 from src.models.vae.net.vq_vae import VQVAEModel # type: ignore
+from src.models.vae.net.kl_vae import KLVAEModel
 
 class VAEModule(L.LightningModule): 
     def __init__(
         self, 
-        vae_model: VQVAEModel,
+        vae_model: KLVAEModel,
         optimizer
     ): 
         super(VAEModule, self).__init__()
@@ -22,18 +23,18 @@ class VAEModule(L.LightningModule):
         self.res_loss = nn.MSELoss()
 
     def forward(self, x): 
-        res_image, vq_loss = self.vae_model.forward(x) 
-        return res_image, vq_loss 
+        res_image, kld_loss = self.vae_model.forward(x)
+        return res_image, kld_loss
 
 
     def training_step(self, batch, batch_index): 
-        res_image, vq_loss = self.forward(batch) 
+        res_image, kld_loss = self.forward(batch) 
         res_loss = self.res_loss(res_image, batch) 
-        total_loss = res_loss + vq_loss 
+        total_loss = res_loss + kld_loss 
 
         self.log('train/total_loss', total_loss, on_epoch=True, on_step=False, prog_bar=True) 
         self.log('train/res_loss', res_loss, on_epoch=True, on_step=False, prog_bar=True) 
-        self.log('train/vq_loss', vq_loss, on_epoch=True, on_step=False, prog_bar=True) 
+        self.log('train/kld_loss', kld_loss, on_epoch=True, on_step=False, prog_bar=True) 
 
         return total_loss 
 
@@ -56,13 +57,13 @@ class VAEModule(L.LightningModule):
 
 
     def validation_step(self, batch, batch_index): 
-        res_image, vq_loss = self.forward(batch) 
+        res_image, kld_loss = self.forward(batch) 
         res_loss = self.res_loss(res_image, batch) 
-        total_loss = res_loss + vq_loss 
+        total_loss = res_loss + kld_loss 
 
         self.log('val/total_loss', total_loss, on_epoch=True, on_step=False, prog_bar=True) 
         self.log('val/res_loss', res_loss, on_epoch=True, on_step=False, prog_bar=True) 
-        self.log('val/vq_loss', vq_loss, on_epoch=True, on_step=False, prog_bar=True) 
+        self.log('val/kld_loss', kld_loss, on_epoch=True, on_step=False, prog_bar=True) 
 
         if batch_index == torch.randint(low=0, high=25, size=(1,))[0]:  
             fake_image = res_image 

@@ -7,6 +7,20 @@ rootutils.setup_root(__file__, indicator='.project-root', pythonpath=True)
 from src.models.vae.components.Encoder import Encoder  # type: ignore
 from src.models.vae.components.Decoder import Decoder  # type: ignore
 
+class GaussianDistribution: 
+    def __init__(
+        self, 
+        parameters: torch.Tensor 
+    ): 
+        self.mean, self.log_var = torch.chunk(parameters, chunks=2, dim=1) 
+        self.std = torch.exp(0.5 * self.log_var)
+
+    def sample(self): 
+        kld_loss = torch.mean(-0.5 * torch.sum(1 + self.log_var - self.mean ** 2  - self.log_var.exp(), dim=[1, 2, 3]), dim=0) 
+        z = self.mean + self.std * torch.randn_like(self.std) 
+
+        return z, kld_loss 
+
 
 class KLVAEModel(nn.Module): 
     def __init__(
@@ -21,13 +35,8 @@ class KLVAEModel(nn.Module):
         self.kld_weight = kld_weight 
 
     def encode(self, x): 
-        mean_log_var = self.encoder(x) 
-        mean, log_var = torch.chunk(mean_log_var, 2, dim=1) 
-        std = torch.exp(0.5 * log_var) 
-
-        z = mean + std * torch.randn_like(std) 
-
-        kld_loss = torch.mean(-0.5 * torch.sum(1 + log_var - mean.pow(2) - log_var.exp(), dim=[1, 2, 3])) 
+        mean_log_var = self.encoder.forward(x) 
+        z, kld_loss = GaussianDistribution(mean_log_var).sample() 
 
         return z, kld_loss 
 
@@ -44,9 +53,15 @@ class KLVAEModel(nn.Module):
 # encoder = Encoder(in_ch=3, double_latent=True).to('cuda')
 # decoder = Decoder(out_ch=3).to('cuda')
 
-# net = KLVAEModel(encoder, decoder, kld_weight=0.000005).to('cuda') 
+# net = KLVAEModel(encoder, decoder, kld_weight=0.00015).to('cuda') 
 # a = torch.rand((1, 3, 256, 256)).to('cuda')
 
 # res_image, kld_loss = net(a) 
 # print(res_image.shape) 
 # print(kld_loss)
+
+# a = torch.rand(10, 3, 32, 32) 
+# print(torch.sum(a, dim=[1, 2, 3]).shape)
+
+# b = torch.rand(10, 3, 32, 32) 
+# print(torch.nn.functional.mse_loss(a, b).shape)

@@ -1,7 +1,7 @@
 _target_: src.models.vae_module.VAEModule
 
 vae_model: 
-  _target_: src.models.vae.net.vqvae_model.VQVAEModel
+  _target_: src.models.vae.net.kl_vae.KLVAEModel
 
   encoder: 
     _target_: src.models.vae.components.Encoder.Encoder
@@ -10,7 +10,7 @@ vae_model:
     z_ch: 3 
     base_ch: 64 
     multiplier: [1, 2, 4] 
-    double_latent: False
+    double_latent: True
 
   decoder: 
     _target_: src.models.vae.components.Decoder.Decoder 
@@ -19,13 +19,8 @@ vae_model:
     z_ch: 3 
     base_ch: 64 
     multiplier: [4, 2, 1] 
-
-  quantizer: 
-    _target_: src.models.vae.components.Quantizer.Quantizer
-
-    num_embeds: 512
-    embed_dim: 3
-    beta: 0.25
+  
+  kld_weight: 0.000001 
 
 
 optimizer:
