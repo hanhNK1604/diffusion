@@ -1,7 +1,7 @@
-_target_: src.models.vae_module.VAEModule
+_target_: src.models.srdiffusion_module.SRDiffusion
 
-vae_model: 
-  _target_: src.models.vae.net.kl_vae.KLVAEModel
+diffusion_model: 
+  _target_: src.models.diffusion.net.diffusion.Diffusion
 
   encoder: 
     _target_: src.models.vae.components.Encoder.Encoder
@@ -11,20 +11,23 @@ vae_model:
     base_ch: 64 
     multiplier: [1, 2, 4] 
     double_latent: True
-
+  
   decoder: 
     _target_: src.models.vae.components.Decoder.Decoder 
 
     out_ch: 3
     z_ch: 3 
     base_ch: 64 
-    multiplier: [4, 2, 1] 
+    multiplier: [4, 2, 1]
+
+  extractor: 
+    _target_: src.models.vae.components.FeatureExtractor.FeatureExtractor
   
-  kld_weight: 1e-6
+  kld_weight: 1e-6 
 
+  feature_weight: 0.006
 
-optimizer:
+optimizer: 
   _target_: torch.optim.Adam 
-  
   _partial_: True
-  lr: 1e-5
+  lr: 1e-5 

@@ -33,9 +33,13 @@ class Encoder(nn.Module):
         self.down = [] 
 
         for i in range(len(self.multiplier)): 
-            downsample = DownsampleBlock(in_ch=channels) 
-            resblock = ResidualBlock(in_ch=channels, out_ch=self.list_ch[i]) 
 
+            if i != len(self.multiplier) - 1: 
+                downsample = DownsampleBlock(in_ch=channels)  
+            else: 
+                downsample = nn.Identity() 
+
+            resblock = ResidualBlock(in_ch=channels, out_ch=self.list_ch[i]) 
             self.down.append(downsample)
             self.down.append(resblock) 
 

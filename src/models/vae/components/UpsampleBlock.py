@@ -11,7 +11,7 @@ class UpsampleBlock(nn.Module):
         self.conv = nn.Conv2d(in_channels=in_ch, out_channels=in_ch, kernel_size=3, padding=1) 
 
     def forward(self, x): 
-        x = nn.functional.interpolate(x, scale_factor=2, mode='bilinear') 
+        x = nn.functional.interpolate(x, scale_factor=2, mode='nearest') 
         return self.conv(x) 
     
 # a = torch.rand(size=(1, 3, 32, 32)) 

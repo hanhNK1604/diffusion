@@ -6,14 +6,15 @@ rootutils.setup_root(__file__, indicator='.project-root', pythonpath=True)
 
 from src.models.diffusion.net.unconditional_diffusion import UnconditionalDiffusion 
 from src.models.components.UNet import UNet 
+from src.models.components.UNet_No_Attn import UNetNoAttn # type: ignore
 from src.models.vae_module import VAEModule 
 
-class LatentDiffusion(UnconditionalDiffusion): 
+class SRDiffusion(UnconditionalDiffusion): 
     def __init__(
         self, 
         vae_module_path: str, 
-        denoise_net: UNet,
-        time_steps: int = 1000, 
+        denoise_net: UNetNoAttn,
+        time_steps: int = 200, 
         schedule: str = 'cosine'
     ): 
         super().__init__(denoise_net=denoise_net, time_steps=time_steps, schedule=schedule)
@@ -41,17 +42,21 @@ class LatentDiffusion(UnconditionalDiffusion):
         return image * self.std.to(image.device) + self.mean.to(image.device)  
 
     def forward(self, batch):
-        z = self.autuencoder_encode(batch)
-        self.denoise_net = self.denoise_net.to(batch.device) 
+        hr, lr = batch 
+        self.denoise_net = self.denoise_net.to(hr.device)
 
-        t = torch.randint(low=0, high=self.time_steps, size=(batch.shape[0],), device=batch.device)
-        noise = torch.randn_like(z, device=batch.device)             
-        zt = self.forward_process(z, noise, t) 
+        hr_latent = self.autuencoder_encode(hr)
+        lr_latent = self.autuencoder_encode(lr) 
+        minus_latent = hr_latent - lr_latent 
 
-        pred_noise = self.denoise_net.forward(zt, t) 
+        t = torch.randint(low=0, high=self.time_steps, size=(hr.shape[0],), device=hr.device) 
+        noise = torch.randn_like(minus_latent)
+        minus_latent_t = self.forward_process(minus_latent, noise, t) 
+
+        pred_noise = self.denoise_net.forward(minus_latent_t, t, lr_latent) 
 
         return pred_noise, noise 
-    
+
 
 
 

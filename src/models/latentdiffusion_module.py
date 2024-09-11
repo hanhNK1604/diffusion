@@ -56,11 +56,12 @@ class LatentDiffusionModule(L.LightningModule):
         
         if batch_index == 0: 
             self.sampler.denoise_net = self.diffusion_model.denoise_net 
-            sample_latent, _ = self.sampler.reverse_process(batch_size=100) 
+            z, _ = self.sampler.reverse_process(batch_size=25) 
         
-            image = self.diffusion_model.autoencoder_decode(sample_latent) 
+            image = self.diffusion_model.autoencoder_decode(z)
+            image = self.diffusion_model.rescale(image) 
 
-            image = make_grid(image, nrow=10) 
+            image = make_grid(image, nrow=5) 
 
             self.logger.log_image(images=[image], key='val/sample_batch_image')
 
@@ -68,15 +69,15 @@ class LatentDiffusionModule(L.LightningModule):
     def on_validation_epoch_end(self): 
         self.sampler.denoise_net = self.diffusion_model.denoise_net
         
-        sample_latent, _ = self.sampler.reverse_process(batch_size=100) 
+        z, _ = self.sampler.reverse_process(batch_size=25) 
         
-        image = self.diffusion_model.autoencoder_decode(sample_latent) 
+        image = self.diffusion_model.autoencoder_decode(z) 
+        image = self.diffusion_model.rescale(image)
 
-        image = make_grid(image, nrow=10) 
+        image = make_grid(image, nrow=5) 
 
         self.logger.log_image(images=[image], key='val/sample_epoch_image')
 
 
-    
     def configure_optimizers(self):
         return self.optimizer(params=self.parameters())

@@ -23,7 +23,7 @@ class VQVAEModel(nn.Module):
     def encode(self, x): 
         latent = self.encoder(x) 
         quantize_latent, vq_loss = self.quantizer(latent) 
-        return quantize_latent, vq_loss 
+        return quantize_latent, vq_loss
     
 
     def decode(self, quant_latent): 
@@ -33,7 +33,7 @@ class VQVAEModel(nn.Module):
         quantize_latent, vq_loss = self.encode(x) 
         res_image = self.decode(quantize_latent) 
         
-        return res_image, vq_loss 
+        return res_image, {'vq_loss': vq_loss}
 
 
 # encoder = Encoder(in_ch=3, double_latent=False).to('cuda')

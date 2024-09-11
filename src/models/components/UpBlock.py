@@ -13,8 +13,7 @@ class UpBlock(nn.Module):
         self.upsamp = nn.UpsamplingBilinear2d(scale_factor=2)
         self.up = nn.Sequential(
             ResBlock(in_ch=in_ch, out_ch=in_ch),
-            ResBlock(in_ch=in_ch, out_ch=out_ch), 
-            ResBlock(in_ch=out_ch, out_ch=out_ch)
+            ResBlock(in_ch=in_ch, out_ch=out_ch)
         )
 
         self.t_emb_layers = nn.Sequential(
@@ -40,6 +39,7 @@ class UpBlock(nn.Module):
         x = torch.cat([skip, x], dim=1)
         x = self.up(x)
         t_emb = self.t_emb_layers(t)[:, :, None, None].repeat(1, 1, x.shape[2], x.shape[3])
+        
         if c != None: 
             c_emb = self.c_emb_layers(c)[:, :, None, None].repeat(1, 1, x.shape[2], x.shape[3]) 
         else: 

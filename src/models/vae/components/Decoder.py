@@ -35,7 +35,10 @@ class Decoder(nn.Module):
         
         self.up = [] 
         for i in range(len(self.multiplier)):
-            upsample = UpsampleBlock(in_ch=channels) 
+            if i != 0: 
+                upsample = UpsampleBlock(in_ch=channels) 
+            else: 
+                upsample = nn.Identity()
             resblock = ResidualBlock(in_ch=channels, out_ch=self.list_ch[i]) 
 
             self.up.append(upsample)
@@ -59,7 +62,7 @@ class Decoder(nn.Module):
         return x 
 
 
-# a = torch.rand(size=(4, 3, 32, 32)) 
+# a = torch.rand(size=(4, 3, 64, 64)) 
 # net = Decoder(out_ch=3, z_ch=3, base_ch=64) 
 
 # print(net(a).shape)

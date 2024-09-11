@@ -4,22 +4,22 @@ from torch import nn
 class AttentionBlock(nn.Module): 
     def __init__(
         self, 
-        in_ch
+        channels
     ): 
         super(AttentionBlock, self).__init__()
-        self.in_ch = in_ch 
+        self.channels = channels 
 
         self.norm = nn.Sequential(
-            nn.GroupNorm(num_groups=32, num_channels=in_ch), 
+            nn.GroupNorm(num_groups=32, num_channels=channels), 
             nn.SiLU(inplace=True)
         )
 
-        self.q = nn.Conv2d(in_channels=in_ch, out_channels=in_ch, kernel_size=1) 
-        self.k = nn.Conv2d(in_channels=in_ch, out_channels=in_ch, kernel_size=1) 
-        self.v = nn.Conv2d(in_channels=in_ch, out_channels=in_ch, kernel_size=1)
+        self.q = nn.Conv2d(in_channels=channels, out_channels=channels, kernel_size=1) 
+        self.k = nn.Conv2d(in_channels=channels, out_channels=channels, kernel_size=1) 
+        self.v = nn.Conv2d(in_channels=channels, out_channels=channels, kernel_size=1)
 
-        self.out = nn.Conv2d(in_channels=in_ch, out_channels=in_ch, kernel_size=1)  
-        self.scale = in_ch ** -0.5 
+        self.out = nn.Conv2d(in_channels=channels, out_channels=channels, kernel_size=1)  
+        self.scale = channels ** -0.5 
 
     def forward(self, x): 
 
@@ -46,5 +46,5 @@ class AttentionBlock(nn.Module):
 
 # a = torch.rand(size=(1, 256, 32, 32)) 
 
-# net = AttentionBlock(in_ch=256) 
+# net = AttentionBlock(channels=256) 
 # print(net(a).shape)

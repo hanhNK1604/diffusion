@@ -5,7 +5,7 @@
 defaults:
   - _self_
   - data: celeba
-  - model: vae_module
+  - model: latentdiffusion_module
   - callbacks: null 
   - logger: wandb # set logger here or use command line (e.g. `python train.py logger=tensorboard`)
   - trainer: default
@@ -43,7 +43,7 @@ train: True
 test: True
 
 # simply provide checkpoint path to resume training
-# ckpt_path: ${paths.log_dir}/train/runs/2024-08-01_17-58-04/diffusion_1_8/kuzorpjl/checkpoints/epoch=25-step=182000.ckpt
+# ckpt_path: ${paths.log_dir}/train/runs/kl_vae_3x64x64/kl_vae/5vzolbqv/checkpoints/epoch=24-step=150000.ckpt
 
 # seed for random number generators in pytorch, numpy and python.random
 seed: null
