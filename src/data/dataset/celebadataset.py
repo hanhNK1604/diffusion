@@ -33,8 +33,9 @@ class CelebADataset(Dataset):
     def __getitem__(self, index): 
         return self.dataset_hr.__getitem__(index)[0] #, self.dataset_lr.__getitem__(index)[0]   
     
-# data_dir = '/mnt/apple/k66/hanh/generative_AI/data' 
+# data_dir = '/mnt/apple/k66/hanh/diffusion/data' 
 # dataset = CelebADataset(data_dir=data_dir) 
 # print(dataset.__getitem__(0).max())
 # print(dataset.__getitem__(0).min()) 
 # print(dataset.__getitem__(0).shape)
+# print(dataset.__len__)

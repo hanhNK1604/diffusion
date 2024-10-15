@@ -13,7 +13,7 @@ class Decoder(nn.Module):
         self, 
         out_ch: int = 3, 
         z_ch: int = 3, 
-        base_ch: int = 64,
+        base_ch: int = 128,
         multiplier: list = [4, 2, 1] 
     ): 
         super(Decoder, self).__init__() 
@@ -22,7 +22,7 @@ class Decoder(nn.Module):
         self.base_ch = base_ch 
         self.multiplier = multiplier
 
-        self.list_ch = [base_ch * i for i in self.multiplier]
+        self.list_ch = [base_ch * i for i in self.multiplier] #[512, 256, 128]
 
         channels = base_ch
 
@@ -62,7 +62,7 @@ class Decoder(nn.Module):
         return x 
 
 
-# a = torch.rand(size=(4, 3, 64, 64)) 
-# net = Decoder(out_ch=3, z_ch=3, base_ch=64) 
+# a = torch.rand(size=(4, 3, 64, 64)).to('cuda')
+# net = Decoder(out_ch=3, z_ch=3, base_ch=64).to('cuda')
 
 # print(net(a).shape)

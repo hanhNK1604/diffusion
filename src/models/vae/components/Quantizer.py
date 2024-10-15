@@ -17,9 +17,9 @@ class Quantizer(nn.Module):
         self.embedding.weight.data.uniform_(-1.0 / self.K, 1.0 / self.K) 
 
     def forward(self, latent: torch.Tensor): 
-        latent = latent.permute(0, 2, 3, 1).contiguous()
+        latent = latent.permute(0, 2, 3, 1).contiguous() # [B x D x H x W] -> [B x H x W x D]
         latent_shape = latent.shape 
-        flat_latent = latent.view(-1, self.D) 
+        flat_latent = latent.view(-1, self.D) # [BHW x D]
         dist = torch.sum(flat_latent ** 2, dim=1, keepdim=True) + torch.sum(self.embedding.weight ** 2, dim=1) - 2 * torch.matmul(flat_latent, self.embedding.weight.t()) 
         encoding_inds = torch.argmin(dist, dim=1).unsqueeze(1) 
 
@@ -28,7 +28,7 @@ class Quantizer(nn.Module):
         encoding_one_hot.scatter_(1, encoding_inds, 1)  # [BHW x K]
 
         quantize_latent = torch.matmul(encoding_one_hot, self.embedding.weight) 
-        quantize_latent = quantize_latent.view(latent_shape)
+        quantize_latent = quantize_latent.view(latent_shape)  # [B x H x W x D]
 
         embedding_loss = nn.functional.mse_loss(quantize_latent.detach(), latent)
         commitment_loss = nn.functional.mse_loss(quantize_latent, latent.detach())
@@ -37,14 +37,14 @@ class Quantizer(nn.Module):
 
         quantize_latent = latent + (quantize_latent - latent).detach()
 
-        return quantize_latent.permute(0, 3, 2, 1).contiguous(), vq_loss 
+        return quantize_latent.permute(0, 3, 1, 2).contiguous(), vq_loss 
 
 
 
 
 
 # a = torch.rand((1, 3, 32, 32))
-# net = Quantizer(num_embeds=512, embed_dim=3, beta=0.25) 
+# net = Quantizer(num_embeds=512, embed_dim=64, beta=0.25) 
 
 # z, loss = net(a) 
 # print(z.shape) 

@@ -45,5 +45,6 @@ class VQVAEModel(nn.Module):
 # a = torch.rand((1, 3, 256, 256)).to('cuda')
 
 # res_image, vq_loss = net(a) 
+# print(encoder(a).shape)
 # print(res_image.shape) 
-# print(vq_loss)
+# print(vq_loss) 

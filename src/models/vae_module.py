@@ -35,7 +35,7 @@ class VAEModule(L.LightningModule):
         self.mean = torch.tensor([0.485, 0.456, 0.406]).unsqueeze(1).unsqueeze(2)
         self.std = torch.tensor([0.229, 0.224, 0.225]).unsqueeze(1).unsqueeze(2)
         
-
+        
     def get_feture_loss(self, real, fake): 
         real_feature = self.feature_extractor.forward(real) 
         fake_feature = self.feature_extractor.forward(fake)
@@ -57,6 +57,16 @@ class VAEModule(L.LightningModule):
 
         return res_image, losses
 
+    def sample(self): 
+        z_channels = self.vae_model.encoder.z_ch 
+        image_size = 64 
+
+        z = torch.randn(size=(25, z_channels, image_size, image_size), device='cuda')
+
+        image = self.rescale(self.vae_model.decode(z)) 
+        image = make_grid(image, nrow=5) 
+        return image  
+        
 
     def training_step(self, batch, batch_index): 
         res_image, losses = self.forward(batch) 
@@ -72,7 +82,7 @@ class VAEModule(L.LightningModule):
     def interpolation(self, batch): 
         
         latens, _ = self.vae_model.encode(batch) 
-        steps = torch.linspace(start=0, end=1, steps=100) 
+        steps = torch.linspace(start=0, end=1, steps=25) 
 
         start_latent = latens[0].unsqueeze(0)
         end_latent = latens[1].unsqueeze(0)
@@ -82,7 +92,7 @@ class VAEModule(L.LightningModule):
         list_decode_interpolation = [self.rescale(self.vae_model.decode(latent)) for latent in list_latent_interpolation] 
         list_decode_interpolation = torch.cat(list_decode_interpolation, dim=0) 
 
-        image = make_grid(list_decode_interpolation, nrow=10)
+        image = make_grid(list_decode_interpolation, nrow=5)
 
         return image 
 
@@ -103,6 +113,9 @@ class VAEModule(L.LightningModule):
             self.log(f'val/{key}', losses[key].detach(), on_step=False, on_epoch=True) 
 
         if batch_index == 16:  
+            # random_image = self.sample() 
+            # self.logger.log_image(images=[random_image], key='val/random_image')
+
             fake_image = self.rescale(res_image) 
             real_image = self.rescale(batch) 
 
@@ -127,3 +140,6 @@ class VAEModule(L.LightningModule):
             
     def configure_optimizers(self): 
         return self.optimizer(self.parameters())
+
+# a = torch.randn(1, 2, 2, device='cuda')
+# print(a)

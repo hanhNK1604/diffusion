@@ -13,7 +13,7 @@ class Encoder(nn.Module):
         self, 
         in_ch: int = 3, 
         z_ch: int = 3,
-        base_ch: int = 64,
+        base_ch: int = 128,
         multiplier: list = [1, 2, 4],
         double_latent = False 
     ): 
@@ -27,7 +27,7 @@ class Encoder(nn.Module):
 
         channels = base_ch
 
-        self.list_ch = [base_ch * i for i in self.multiplier] #[64, 128, 256] 
+        self.list_ch = [base_ch * i for i in self.multiplier] #[128, 256, 512] 
         self.in_conv = nn.Conv2d(in_channels=in_ch, out_channels=base_ch, kernel_size=3, padding=1) 
 
         self.down = [] 
@@ -40,6 +40,7 @@ class Encoder(nn.Module):
                 downsample = nn.Identity() 
 
             resblock = ResidualBlock(in_ch=channels, out_ch=self.list_ch[i]) 
+            
             self.down.append(downsample)
             self.down.append(resblock) 
 
@@ -75,7 +76,7 @@ class Encoder(nn.Module):
 
         return x 
 
-# a = torch.rand(size=(4, 3, 256, 256)) 
-# net = Encoder(in_ch=3, z_ch=3, double_latent=True) 
+a = torch.rand(size=(4, 3, 256, 256)).to('cuda') 
+net = Encoder(in_ch=3, z_ch=3, double_latent=False).to('cuda')
 
-# print(net(a).shape)
+print(net(a).shape)

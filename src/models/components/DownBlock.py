@@ -13,6 +13,7 @@ class DownBlock(nn.Module):
             nn.MaxPool2d(kernel_size=2, stride=2),
             ResBlock(in_ch=in_ch, out_ch=out_ch),
             ResBlock(in_ch=out_ch, out_ch=out_ch),
+            ResBlock(in_ch=out_ch, out_ch=out_ch)
         )
 
         self.t_emb_layers = nn.Sequential(

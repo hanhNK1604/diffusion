@@ -10,10 +10,11 @@ class UpBlock(nn.Module):
     def __init__(self, in_ch, out_ch, t_emb_dim=256, c_emb_dim=256):
         super(UpBlock, self).__init__()
 
-        self.upsamp = nn.UpsamplingBilinear2d(scale_factor=2)
+        self.upsamp = nn.Upsample(scale_factor=2, mode='nearest')
         self.up = nn.Sequential(
             ResBlock(in_ch=in_ch, out_ch=in_ch),
-            ResBlock(in_ch=in_ch, out_ch=out_ch)
+            ResBlock(in_ch=in_ch, out_ch=out_ch), 
+            ResBlock(in_ch=out_ch, out_ch=out_ch)
         )
 
         self.t_emb_layers = nn.Sequential(
@@ -34,9 +35,8 @@ class UpBlock(nn.Module):
           skip: from DownBLock: (bs, ch=inp_ch/2, w*2, h*2)
           t: time_embed: (bs, t_embed_dim=256)
         """
-
-        x = self.upsamp(x)
         x = torch.cat([skip, x], dim=1)
+        x = self.upsamp(x)
         x = self.up(x)
         t_emb = self.t_emb_layers(t)[:, :, None, None].repeat(1, 1, x.shape[2], x.shape[3])
         

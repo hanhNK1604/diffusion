@@ -6,9 +6,10 @@ diffusion_model:
   denoise_net: 
     _target_: src.models.components.UNet.UNet
     in_ch: 1 
-    t_emb_dim: 256 
-    c_emb_dim: 256 
-    num_classes: 10 
+    t_emb_dim: 256
+    base_channel: 64
+    multiplier: [1, 2, 4]
+    type_condition: 'label'
   time_steps: 1000 
   schedule: 'cosine'
 
@@ -24,4 +25,4 @@ sampler:
 optimizer:
   _target_: torch.optim.Adam 
   _partial_: True
-  lr: 1e-4
+  lr: 1e-5

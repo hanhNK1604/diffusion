@@ -7,11 +7,13 @@ diffusion_model:
   denoise_net: 
     _target_: src.models.components.UNet.UNet
     in_ch: 3
-    t_emb_dim: 256 
+    t_emb_dim: 256
+    base_channel: 64
+    multiplier: [1, 2, 4]
     type_condition: None 
   time_steps: 1000 
   schedule: 'cosine'
-  vae_module_path: '/mnt/apple/k66/hanh/diffusion/logs/train/runs/kl_vae_3x64x64v0/KL_VAE/wzopack4/checkpoints/epoch=74-step=450000.ckpt'
+  vae_module_path: '/mnt/apple/k66/hanh/diffusion/logs/train/runs/vq_vae_3x64x64/vq_vae/neriv19m/checkpoints/epoch=74-step=450000.ckpt'
 
 sampler: 
   _target_: src.models.diffusion.sampler.ddim.DDIMSampler

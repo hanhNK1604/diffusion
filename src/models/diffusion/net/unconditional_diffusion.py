@@ -19,7 +19,7 @@ class UnconditionalDiffusion(nn.Module):
         self.schedule = schedule
 
         if schedule == 'linear': 
-            self.betas = torch.linspace(start=1e-4, end=2e-2, steps=time_steps) 
+            self.betas = torch.linspace(start=0.0015, end=0.019, steps=time_steps) 
         
         elif schedule == 'cosine': 
             s = 8e-3

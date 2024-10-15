@@ -12,7 +12,7 @@ from torchvision.utils import make_grid
 
 from src.models.diffusion.sampler.ddim import DDIMSampler 
 from torchmetrics.image import FrechetInceptionDistance 
-from src.models.diffusion.net.latent_diffusion import LatentDiffusion  # type: ignore
+from src.models.diffusion.net.latent_diffusion import LatentDiffusion  
 
 class LatentDiffusionModule(L.LightningModule): 
     def __init__(
@@ -23,10 +23,12 @@ class LatentDiffusionModule(L.LightningModule):
     ): 
         super(LatentDiffusionModule, self).__init__() 
 
+        self.save_hyperparameters(logger=False)
+
         self.diffusion_model = diffusion_model 
         self.optimizer = optimizer 
         self.sampler = sampler 
-        
+        self.fid_metric = FrechetInceptionDistance(feature=2048, normalize=True, input_img_size=(3, 256, 256))
         self.loss_fn = nn.MSELoss() 
         
 
@@ -53,9 +55,21 @@ class LatentDiffusionModule(L.LightningModule):
     def validation_step(self, batch, batch_index): 
         loss = self.step(batch) 
         self.log('val/loss', loss, prog_bar=True, on_step=False, on_epoch=True)
+
+        self.sampler.denoise_net = self.diffusion_model.denoise_net 
+        z, _ = self.sampler.reverse_process(batch_size=batch.shape[0]) 
+        image = self.diffusion_model.autoencoder_decode(z) 
+        image = self.diffusion_model.rescale(image) 
+
+        self.fid_metric.update(self.diffusion_model.rescale(batch), real=True) 
+        self.fid_metric.update(image, real=False) 
+
+        fid = self.fid_metric.compute() 
+
+        self.log('val/fid', fid, on_epoch=True, on_step=False) 
+
         
         if batch_index == 0: 
-            self.sampler.denoise_net = self.diffusion_model.denoise_net 
             z, _ = self.sampler.reverse_process(batch_size=25) 
         
             image = self.diffusion_model.autoencoder_decode(z)
@@ -78,6 +92,19 @@ class LatentDiffusionModule(L.LightningModule):
 
         self.logger.log_image(images=[image], key='val/sample_epoch_image')
 
+    
+    def test_step(self, batch, batch_index): 
+        self.sampler.denoise_net = self.diffusion_model.denoise_net 
+        z, _ = self.sampler.reverse_process(batch_size=batch.shape[0]) 
+        image = self.diffusion_model.autoencoder_decode(z) 
+        image = self.diffusion_model.rescale(image) 
+
+        self.fid_metric.update(self.diffusion_model.rescale(batch), real=True) 
+        self.fid_metric.update(image, real=False) 
+
+        fid = self.fid_metric.compute() 
+
+        self.log('test/fid', fid, on_epoch=True, on_step=False) 
 
     def configure_optimizers(self):
         return self.optimizer(params=self.parameters())
