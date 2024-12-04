@@ -77,7 +77,7 @@ class DDPMSampler:
                 alpha_bar = self.alpha_bar[t][:, None, None, None] 
                 betas = self.betas[t][:, None, None, None] 
 
-                mean = 1 / torch.sqrt(alphas) * (x - ((1 - alphas) / (torch.sqrt(1 - alpha_bar))) * pred_noise) 
+                mean = 1 / torch.sqrt(alphas) * (x - ((1 - alphas) / (torch.sqrt(1 - alpha_bar))) * pred_noise)
                 std = torch.sqrt(betas) 
 
                 if i >= 1: 
@@ -89,6 +89,7 @@ class DDPMSampler:
 
                 if (i + 1) % self.step_collect == 0 or i == 0: 
                     collection.append(x)
+            
         
         return x, collection 
     

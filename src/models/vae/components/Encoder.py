@@ -76,7 +76,7 @@ class Encoder(nn.Module):
 
         return x 
 
-a = torch.rand(size=(4, 3, 256, 256)).to('cuda') 
-net = Encoder(in_ch=3, z_ch=3, double_latent=False).to('cuda')
+# a = torch.rand(size=(4, 3, 256, 256)).to('cuda') 
+# net = Encoder(in_ch=3, z_ch=3, double_latent=True).to('cuda')
 
-print(net(a).shape)
+# print(net(a).shape)

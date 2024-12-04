@@ -15,27 +15,26 @@ class CelebADataset(Dataset):
         self.data_path = os.path.join(self.data_dir, 'celeba30k') 
         self.transform_hr = transforms.Compose([
             transforms.ToTensor(), 
-            transforms.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225))
+            transforms.Normalize(mean=(0.5, 0.5, 0.5), std=(0.5, 0.5, 0.5))
         ])
 
         self.transform_lr = transforms.Compose([
             transforms.ToTensor(),
-            transforms.Resize((64, 64), interpolation=torchvision.transforms.InterpolationMode.BICUBIC), 
-            transforms.Resize((256, 256), interpolation=torchvision.transforms.InterpolationMode.BICUBIC),
-            transforms.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)), 
+            transforms.Resize((64, 64), interpolation=torchvision.transforms.InterpolationMode.BILINEAR), 
+            transforms.Normalize(mean=(0.5, 0.5, 0.5), std=(0.5, 0.5, 0.5)), 
         ])
         self.dataset_hr = ImageFolder(self.data_path, transform=self.transform_hr) 
-        # self.dataset_lr = ImageFolder(self.data_path, transform=self.transform_lr) 
+        self.dataset_lr = ImageFolder(self.data_path, transform=self.transform_lr) 
     
     def __len__(self):
         return len(self.dataset_hr) 
     
     def __getitem__(self, index): 
-        return self.dataset_hr.__getitem__(index)[0] #, self.dataset_lr.__getitem__(index)[0]   
+        return self.dataset_hr.__getitem__(index)[0], self.dataset_lr.__getitem__(index)[0]   
     
 # data_dir = '/mnt/apple/k66/hanh/diffusion/data' 
 # dataset = CelebADataset(data_dir=data_dir) 
-# print(dataset.__getitem__(0).max())
-# print(dataset.__getitem__(0).min()) 
-# print(dataset.__getitem__(0).shape)
-# print(dataset.__len__)
+# print(dataset.__getitem__(0)[0].max())
+# print(dataset.__getitem__(0)[0].min()) 
+# print(dataset.__getitem__(0)[1].max())
+# print(dataset.__getitem__(0)[1].min()) 

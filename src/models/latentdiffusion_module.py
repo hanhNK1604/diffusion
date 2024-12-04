@@ -106,5 +106,5 @@ class LatentDiffusionModule(L.LightningModule):
 
         self.log('test/fid', fid, on_epoch=True, on_step=False) 
 
-    def configure_optimizers(self):
-        return self.optimizer(params=self.parameters())
+    
+    

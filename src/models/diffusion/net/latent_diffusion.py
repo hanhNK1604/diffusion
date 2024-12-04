@@ -25,8 +25,8 @@ class LatentDiffusion(UnconditionalDiffusion):
         for p in self.vae_model.parameters():  
             p.requires_grad = False 
 
-        self.mean = torch.tensor([0.485, 0.456, 0.406]).unsqueeze(1).unsqueeze(2)
-        self.std = torch.tensor([0.229, 0.224, 0.225]).unsqueeze(1).unsqueeze(2)
+        self.mean = torch.tensor([0.5, 0.5, 0.5]).unsqueeze(1).unsqueeze(2)
+        self.std = torch.tensor([0.5, 0.5, 0.5]).unsqueeze(1).unsqueeze(2)
     
 
     def autuencoder_encode(self, x):

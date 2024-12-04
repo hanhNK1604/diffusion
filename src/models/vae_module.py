@@ -32,8 +32,8 @@ class VAEModule(L.LightningModule):
         self.psnr_metric = PeakSignalNoiseRatio() 
         self.ssim_metric = StructuralSimilarityIndexMeasure()
 
-        self.mean = torch.tensor([0.485, 0.456, 0.406]).unsqueeze(1).unsqueeze(2)
-        self.std = torch.tensor([0.229, 0.224, 0.225]).unsqueeze(1).unsqueeze(2)
+        self.mean = torch.tensor([0.5, 0.5, 0.5]).unsqueeze(1).unsqueeze(2)
+        self.std = torch.tensor([0.5, 0.5, 0.5]).unsqueeze(1).unsqueeze(2)
         
         
     def get_feture_loss(self, real, fake): 

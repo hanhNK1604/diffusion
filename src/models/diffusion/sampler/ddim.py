@@ -36,7 +36,7 @@ class DDIMSampler:
         self.tau = [i for i in range(0, self.time_steps, self.time_steps//self.reduce_steps)]
         self.tau = [i for i in reversed(self.tau)] 
 
-    def reverse_process(self, batch_size=None): 
+    def reverse_process(self, batch_size=None, c=None): 
         if batch_size == None:
             batch_size = self.num_samples
 
@@ -47,7 +47,7 @@ class DDIMSampler:
             for i in range(len(self.tau)): 
                 if self.tau[i] != 0: 
                     t = (torch.ones(size=(batch_size,)) * self.tau[i]).long().to(self.device)
-                    noise_pred = self.denoise_net(x, t)
+                    noise_pred = self.denoise_net(x, t, c)
                     alpha_bar = self.alpha_bar[t][:, None, None, None] 
 
                     t_prev = (torch.ones(size=(batch_size,)) * self.tau[i + 1]).long().to(self.device) 
@@ -59,14 +59,16 @@ class DDIMSampler:
                 else: 
                     t = (torch.ones(size=(batch_size,)) * self.tau[i]).long().to(self.device) 
                     alpha_bar = self.alpha_bar[t][:, None, None, None]
-                    noise_pred = self.denoise_net(x, t) 
+                    noise_pred = self.denoise_net(x, t, c) 
 
                     x = (x - torch.sqrt(1 - alpha_bar) * noise_pred)/torch.sqrt(alpha_bar) 
                 
+                x = torch.clamp(x, min=-1, max=1)
                 collection.append(x) 
             
             return x, collection 
     
+
     def reverse_process_condition(self, w, c, batch_size=None): 
         w = torch.tensor([w]).to(self.device)
         c = c.to(self.device) 

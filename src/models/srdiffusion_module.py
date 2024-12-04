@@ -1,96 +1,121 @@
-import lightning as L 
-import torch 
-from torch import nn 
-
-from torchmetrics.image import PeakSignalNoiseRatio
-from torchmetrics.image import StructuralSimilarityIndexMeasure 
-from torchvision.utils import make_grid 
-
-import rootutils 
+import rootutils
 rootutils.setup_root(__file__, indicator='.project-root', pythonpath=True) 
 
-from src.models.diffusion.net.diffusion import Diffusion  # type: ignore
-from src.models.diffusion.net.sr_diffusion import SRDiffusion # type: ignore 
+import lightning as L 
+import torch 
+from torch import nn, optim
+from torch.nn import functional as F
+import torchmetrics 
+from torchmetrics.image import StructuralSimilarityIndexMeasure, PeakSignalNoiseRatio
+from torch.optim import Optimizer
+from torchvision.utils import make_grid
+
+from src.models.diffusion.net.srdiffusion import SuperResolutionDiffusion 
 from src.models.diffusion.sampler.ddpm import DDPMSampler 
+from src.models.diffusion.sampler.ddim import DDIMSampler 
 
-class SRDiffusionModule(L.LightningModule): 
+class SuperResolutionDiffusionModule(L.LightningModule): 
     def __init__(
-        self, 
-        diffusion_model: SRDiffusion, 
-        sampler: DDPMSampler, 
+        self,
+        diffusion_model: SuperResolutionDiffusion, 
         optimizer, 
+        sampler: DDIMSampler
     ): 
-        super(SRDiffusionModule, self).__init__() 
-
-        self.save_hyperparameters(logger=False) 
+        super(SuperResolutionDiffusionModule, self).__init__() 
+        self.save_hyperparameters(logger=False)
         self.diffusion_model = diffusion_model 
-        self.sampler = sampler 
         self.optimizer = optimizer 
+        self.sampler = sampler 
 
-        self.psnr_metric = PeakSignalNoiseRatio() 
-        self.ssim_metric = StructuralSimilarityIndexMeasure()
+        self.ssim = StructuralSimilarityIndexMeasure() 
+        self.psnr = PeakSignalNoiseRatio() 
 
-        self.loss_fn = nn.MSELoss() 
+        self.loss_fn = nn.L1Loss() 
+        self.mean = torch.tensor([0.5, 0.5, 0.5]).unsqueeze(1).unsqueeze(2)
+        self.std = torch.tensor([0.5, 0.5, 0.5]).unsqueeze(1).unsqueeze(2)
 
     def forward(self, batch): 
-        pred_noise, noise = self.diffusion_model.forward(batch)
-        loss = self.loss_fn(pred_noise, noise) 
-
-        return loss 
+        pred_noise, noise = self.diffusion_model.forward(batch) 
+        return pred_noise, noise 
     
     def step(self, batch): 
-        loss = self.forward(batch) 
-        return loss  
-
-    def on_train_epoch_start(self): 
-        self.psnr_metric.reset() 
-        self.ssim_metric.reset() 
+        pred_noise, noise = self.forward(batch) 
+        loss = self.loss_fn(pred_noise, noise) 
+        return loss 
     
     def training_step(self, batch, batch_index): 
-        total_loss = self.step(batch) 
-        self.log('train/total_loss', total_loss, prog_bar=True, on_epoch=True, on_step=False) 
+        loss = self.step(batch) 
+        self.log('train/loss', loss, on_epoch=True, on_step=False, prog_bar=True)
+        return loss 
 
-        return total_loss 
+    def rescale(self, image): 
+        return image * self.std.to(image.device) + self.mean.to(image.device)
 
     def validation_step(self, batch, batch_index): 
         loss = self.step(batch) 
-        self.log('val/total_loss', loss, on_epoch=True, on_step=False)
-
-        hr, lr = batch 
-        hr_latent = self.diffusion_model.autuencoder_encode(hr)
-        lr_latent = self.diffusion_model.autuencoder_encode(lr) 
-
+        self.log('val/loss', loss, prog_bar=True, on_step=False, on_epoch=True)
         self.sampler.denoise_net = self.diffusion_model.denoise_net 
 
-        if batch_index == 16: 
-            minus_latent_pred, _ = self.sampler.reverse_process_no_guidance(c=lr_latent, batch_size=hr_latent.shape[0]) 
-            hr_pred = self.diffusion_model.autoencoder_decode(minus_latent_pred + lr_latent) 
+        hr, lr = batch 
+        bs = hr.shape[0] 
+        hr_pred, collection = self.sampler.reverse_process_condition(w=3.0, c=lr, batch_size=bs)
 
-            self.logger.log_image(images=[make_grid(self.diffusion_model.rescale(hr_pred), nrow=2)], key='val/hr_pred') 
-            self.logger.log_image(images=[make_grid(self.diffusion_model.rescale(hr), nrow=2)], key='val/hr_image')
-            self.logger.log_image(images=[make_grid(self.diffusion_model.rescale(lr), nrow=2)], key='val/lr_image')
+        hr = self.rescale(hr) 
+        lr = self.rescale(lr) 
+        hr_pred = self.rescale(hr_pred) 
+
+        hr = hr.clamp(0, 1) 
+        lr = lr.clamp(0, 1) 
+        hr_pred = hr_pred.clamp(0, 1)
+
+        ssim = self.ssim(hr_pred, hr) 
+        psnr = self.psnr(hr_pred, hr) 
+
+        self.log('val/ssim', ssim, prog_bar=True, on_epoch=True, on_step=False) 
+        self.log('val/psnr', psnr, prog_bar=True, on_epoch=True, on_step=False)
+
+        hr = make_grid(hr, nrow=2)
+        lr = make_grid(lr, nrow=2) 
+        hr_pred = make_grid(hr_pred, nrow=2)
+
     
+        self.logger.log_image(images=[hr], key='val/hr_image') 
+        self.logger.log_image(images=[lr], key='val/lr_image') 
+        self.logger.log_image(images=[hr_pred], key='val/hr_image_reconstruct')
+
     def test_step(self, batch, batch_index): 
         loss = self.step(batch) 
-        self.log('test/total_loss', loss, on_epoch=True, on_step=False)
-
-        hr, lr = batch 
-        hr_latent = self.diffusion_model.autuencoder_encode(hr)
-        lr_latent = self.diffusion_model.autuencoder_encode(lr) 
-
+        self.log('test/loss', loss, prog_bar=True, on_step=False, on_epoch=True)
         self.sampler.denoise_net = self.diffusion_model.denoise_net 
 
-        minus_latent_pred, _ = self.sampler.reverse_process_no_guidance(c=lr_latent, batch_size=hr_latent.shape[0]) 
-        hr_pred = self.diffusion_model.autoencoder_decode(minus_latent_pred + lr_latent) 
+        hr, lr = batch 
+        bs = hr.shape[0] 
+        hr_pred, collection = self.sampler.reverse_process_condition(w=3.0, c=lr, batch_size=bs)
+  
+        hr_pred = hr_pred.clamp(-1, 1) 
 
-        psnr = self.psnr_metric(self.diffusion_model.rescale(hr), self.diffusion_model.rescale(hr_pred))
-        ssim = self.ssim_metric(self.diffusion_model.rescale(hr), self.diffusion_model.rescale(hr_pred))
+        hr = self.rescale(hr) 
+        lr = self.rescale(lr) 
+        hr_pred = self.rescale(hr_pred) 
 
-        self.log('test/psnr', psnr, on_epoch=True, on_step=False)
-        self.log('test/ssim', ssim, on_epoch=True, on_step=False)
+        hr = hr.clamp(0, 1) 
+        lr = lr.clamp(0, 1) 
+        hr_pred = hr_pred.clamp(0, 1)
+
+        ssim = self.ssim(hr_pred, hr) 
+        psnr = self.psnr(hr_pred, hr) 
+
+        self.log('test/ssim', ssim, prog_bar=True, on_epoch=True, on_step=False) 
+        self.log('test/psnr', psnr, prog_bar=True, on_epoch=True, on_step=False)
+
+        hr = make_grid(hr, nrow=2)
+        lr = make_grid(lr, nrow=2) 
+        hr_pred = make_grid(hr_pred, nrow=2)
+
     
+        self.logger.log_image(images=[hr], key='test/hr_image') 
+        self.logger.log_image(images=[lr], key='test/lr_image') 
+        self.logger.log_image(images=[hr_pred], key='test/hr_image_reconstruct')
+
     def configure_optimizers(self):
-        return self.optimizer(self.parameters()) 
-
-
-
+        return self.optimizer(params=self.parameters())

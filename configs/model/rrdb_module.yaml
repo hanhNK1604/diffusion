@@ -1,0 +1,15 @@
+_target_: src.models.rrdb_module.RRDBModule
+
+net: 
+  _target_: src.models.components.RRDB.RRDB
+  
+  in_ch: 3
+  out_ch: 3
+  mid_ch: 64 
+  num_block: 6
+
+optimizer:
+  _target_: torch.optim.Adam 
+  
+  _partial_: True
+  lr: 1e-5

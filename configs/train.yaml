@@ -4,8 +4,8 @@
 # order of defaults determines the order in which configs override each other
 defaults:
   - _self_
-  - data: datamodule
-  - model: diffusion_module
+  - data: celeba
+  - model: srdiffusion_module
   - callbacks: null 
   - logger: wandb # set logger here or use command line (e.g. `python train.py logger=tensorboard`)
   - trainer: default
@@ -36,14 +36,14 @@ task_name: "train"
 tags: ["dev"]
 
 # set False to skip model training
-train: True
+train: False
 
 # evaluate on test set, using best model weights achieved during training
 # lightning chooses best weights based on the metric specified in checkpoint callback
 test: True
 
 # simply provide checkpoint path to resume training
-# ckpt_path: ${paths.log_dir}/train/runs/kl_vae_3x64x64/kl_vae/5vzolbqv/checkpoints/epoch=24-step=150000.ckpt
+ckpt_path: ${paths.log_dir}/train/runs/2024-12-01_01-51-51/sr_diffusion/a77l0af0/checkpoints/epoch=399-step=2800000.ckpt
 
 # seed for random number generators in pytorch, numpy and python.random
 seed: null
