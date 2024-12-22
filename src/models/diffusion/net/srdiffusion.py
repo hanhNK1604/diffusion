@@ -17,18 +17,33 @@ class SuperResolutionDiffusion(UnconditionalDiffusion):
         super().__init__(denoise_net=denoise_net, time_steps=time_steps, schedule=schedule) 
     
     def forward(self, batch): 
+        # hr, lr = batch 
+        # noise = torch.randn_like(hr, device=hr.device) 
+        # t = torch.randint(low=0, high=self.time_steps, size=(hr.shape[0],), device=hr.device) 
+        # self.denoise_net = self.denoise_net.to(hr.device) 
+
+        # x_t = self.forward_process(x=hr, noise=noise, t=t)
+        # if torch.randint(low=0, high=2, size=(1,))[0] == 1: 
+        #     pred_noise = self.denoise_net.forward(x=x_t, t=t, c=lr) 
+        # else: 
+        #     pred_noise = self.denoise_net.forward(x=x_t, t=t, c=None) 
+            
+        # return pred_noise, noise 
+
         hr, lr = batch 
         noise = torch.randn_like(hr, device=hr.device) 
         t = torch.randint(low=0, high=self.time_steps, size=(hr.shape[0],), device=hr.device) 
         self.denoise_net = self.denoise_net.to(hr.device) 
 
-        x_t = self.forward_process(x=hr, noise=noise, t=t)
-        if torch.randint(low=0, high=2, size=(1,))[0] == 1: 
-            pred_noise = self.denoise_net.forward(x=x_t, t=t, c=lr) 
-        else: 
-            pred_noise = self.denoise_net.forward(x=x_t, t=t, c=None) 
-            
-        return pred_noise, noise 
+        up = torch.nn.functional.interpolate(lr, scale_factor=4, mode="bilinear") 
+        up.required_grad = False
+
+        minus = hr - up 
+        minus_t = self.forward_process(x=minus, noise=noise, t=t) 
+        pred_noise = self.denoise_net.forward(x=minus_t, t=t, c=lr) 
+
+        return pred_noise, noise
+
 
 #test 
 # hr = torch.randn(size=(4, 3, 256, 256)).to('cuda')

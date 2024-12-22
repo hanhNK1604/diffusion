@@ -19,7 +19,7 @@ class SuperResolutionDiffusionModule(L.LightningModule):
         self,
         diffusion_model: SuperResolutionDiffusion, 
         optimizer, 
-        sampler: DDIMSampler
+        sampler: DDPMSampler
     ): 
         super(SuperResolutionDiffusionModule, self).__init__() 
         self.save_hyperparameters(logger=False)
@@ -58,7 +58,13 @@ class SuperResolutionDiffusionModule(L.LightningModule):
 
         hr, lr = batch 
         bs = hr.shape[0] 
-        hr_pred, collection = self.sampler.reverse_process_condition(w=3.0, c=lr, batch_size=bs)
+        minus_pred, collection = self.sampler.reverse_sr_diffusion(c=lr, batch_size=bs)
+  
+        minus_pred = minus_pred.clamp(-1, 1) 
+        up = torch.nn.functional.interpolate(lr, scale_factor=4, mode="bilinear")
+        up.required_grad = False 
+
+        hr_pred = up + minus_pred
 
         hr = self.rescale(hr) 
         lr = self.rescale(lr) 
@@ -90,9 +96,13 @@ class SuperResolutionDiffusionModule(L.LightningModule):
 
         hr, lr = batch 
         bs = hr.shape[0] 
-        hr_pred, collection = self.sampler.reverse_process_condition(w=3.0, c=lr, batch_size=bs)
+        minus_pred, collection = self.sampler.reverse_sr_diffusion(c=lr, batch_size=bs)
   
-        hr_pred = hr_pred.clamp(-1, 1) 
+        minus_pred = minus_pred.clamp(-1, 1) 
+        up = torch.nn.functional.interpolate(lr, scale_factor=4, mode="bilinear")
+        up.required_grad = False 
+
+        hr_pred = up + minus_pred
 
         hr = self.rescale(hr) 
         lr = self.rescale(lr) 

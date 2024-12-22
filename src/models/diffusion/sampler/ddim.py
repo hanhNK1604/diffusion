@@ -52,6 +52,7 @@ class DDIMSampler:
 
                     t_prev = (torch.ones(size=(batch_size,)) * self.tau[i + 1]).long().to(self.device) 
                     pred_x0 = (x - torch.sqrt(1. - alpha_bar) * noise_pred)/torch.sqrt(alpha_bar) 
+                    pred_x0 = torch.clamp(pred_x0, -1, 1)
                     alpha_bar_prev = self.alpha_bar[t_prev][:, None, None, None] 
 
                     x = torch.sqrt(alpha_bar_prev) * pred_x0  + torch.sqrt(1 - alpha_bar_prev) * noise_pred 
@@ -93,6 +94,7 @@ class DDIMSampler:
                     alpha_bar_prev = self.alpha_bar[t_prev][:, None, None, None] 
 
                     pred_x0 = (x - torch.sqrt(1. - alpha_bar) * final_noise_pred)/torch.sqrt(alpha_bar) 
+                    pred_x0 = torch.clamp(pred_x0, -1, 1); 
 
                     x = torch.sqrt(alpha_bar_prev) * pred_x0 + torch.sqrt(1 - alpha_bar_prev) * final_noise_pred
                 

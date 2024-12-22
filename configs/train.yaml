@@ -36,14 +36,13 @@ task_name: "train"
 tags: ["dev"]
 
 # set False to skip model training
-train: False
+train: True
 
 # evaluate on test set, using best model weights achieved during training
 # lightning chooses best weights based on the metric specified in checkpoint callback
 test: True
 
 # simply provide checkpoint path to resume training
-ckpt_path: ${paths.log_dir}/train/runs/2024-12-01_01-51-51/sr_diffusion/a77l0af0/checkpoints/epoch=399-step=2800000.ckpt
-
+# ckpt_path: ${paths.log_dir}/train/runs/sr_292/sr_diffusion/a77l0af0/checkpoints/epoch=292-step=2051000.ckpt
 # seed for random number generators in pytorch, numpy and python.random
 seed: null

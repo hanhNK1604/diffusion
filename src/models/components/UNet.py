@@ -40,7 +40,7 @@ class UNet(nn.Module):
             self.embedder = LabelEmbedding(num_embeds=10, emb_dim=t_emb_dim)
         
         if type_condition == "sr": 
-            self.embedder = RRDBModule.load_from_checkpoint('/mnt/apple/k66/hanh/diffusion/logs/train/runs/2024-11-20_17-07-14/rrdb/lrkx9qsh/checkpoints/epoch=99-step=700000.ckpt')
+            self.embedder = RRDBModule.load_from_checkpoint('/mnt/apple/k66/hanh/diffusion/logs/train/runs/rrdb/rrdb/lrkx9qsh/checkpoints/epoch=99-step=700000.ckpt')
             self.embedder.eval().freeze()
             for p in self.embedder.parameters(): 
                 p.requires_grad = False
