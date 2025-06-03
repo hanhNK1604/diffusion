@@ -1,0 +1,8 @@
+_target_: src.data.datamodule.Datamodule
+dataset: 
+  _target_: src.data.dataset.afhqdataset.AFHQDataset
+  data_dir: ${paths.data_dir} 
+train_val_test_split: [15000, 560, 570] 
+batch_size: 4
+num_workers: 4 
+pin_memory: True 

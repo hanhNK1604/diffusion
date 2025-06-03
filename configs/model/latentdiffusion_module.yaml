@@ -1,0 +1,31 @@
+_target_: src.models.latentdiffusion_module.LatentDiffusionModule 
+
+
+diffusion_model: 
+  _target_: src.models.diffusion.net.latent_diffusion.LatentDiffusion
+
+  denoise_net: 
+    _target_: src.models.components.UNet.UNet
+    in_ch: 3
+    t_emb_dim: 256
+    base_channel: 64
+    multiplier: [1, 2, 4]
+    type_condition: None 
+    use_discrete_time: True
+  time_steps: 1000 
+  schedule: 'cosine'
+  vae_module_path: '/mnt/apple/k66/hanh/diffusion/logs/train/runs/vq_vae_3x64x64/vq_vae/neriv19m/checkpoints/epoch=74-step=450000.ckpt'
+
+sampler: 
+  _target_: src.models.diffusion.sampler.ddim.DDIMSampler
+  diffusion_model: ${model.diffusion_model}
+  num_samples: 100
+  image_size: 64
+  channels: 3 
+  reduce_steps: 50
+  device: 'cuda'
+
+optimizer:
+  _target_: torch.optim.Adam 
+  _partial_: True
+  lr: 1e-5 

@@ -1,0 +1,29 @@
+_target_: src.models.diffusion_module.DiffusionModule 
+
+diffusion_model: 
+  _target_: src.models.diffusion.net.unconditional_diffusion.UnconditionalDiffusion
+
+  denoise_net: 
+    _target_: src.models.components.UNet.UNet
+    in_ch: 1 
+    t_emb_dim: 256
+    base_channel: 64
+    multiplier: [1, 2, 4]
+    type_condition: None
+    use_discrete_time: True
+  time_steps: 1000 
+  schedule: 'cosine'
+
+sampler: 
+  _target_: src.models.diffusion.sampler.ddpm.DDPMSampler
+  diffusion_model: ${model.diffusion_model}
+  num_samples: 100
+  image_size: 32 
+  channels: 1 
+  step_collect: 50
+  device: 'cuda'
+
+optimizer:
+  _target_: torch.optim.Adam 
+  _partial_: True
+  lr: 1e-5

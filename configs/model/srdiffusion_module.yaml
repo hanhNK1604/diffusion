@@ -1,0 +1,31 @@
+_target_: src.models.srdiffusion_module.SuperResolutionDiffusionModule
+
+
+diffusion_model: 
+  _target_: src.models.diffusion.net.srdiffusion.SuperResolutionDiffusion
+
+  denoise_net: 
+    _target_: src.models.components.UNet.UNet
+    in_ch: 3
+    t_emb_dim: 256
+    base_channel: 64
+    multiplier: [1, 2, 4, 4]
+    use_attention: False
+    type_condition: 'sr'
+    # use_discrete_time: True
+  time_steps: 100
+  schedule: 'cosine'
+
+sampler: 
+  _target_: src.models.diffusion.sampler.ddpm.DDPMSampler
+  diffusion_model: ${model.diffusion_model}
+  num_samples: 100
+  image_size: 256
+  channels: 3 
+  step_collect: 10
+  device: 'cuda'
+
+optimizer:
+  _target_: torch.optim.Adam 
+  _partial_: True
+  lr: 1e-5 
