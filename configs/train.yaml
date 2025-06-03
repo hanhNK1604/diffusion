@@ -43,6 +43,6 @@ train: True
 test: True
 
 # simply provide checkpoint path to resume training
-ckpt_path: ${paths.log_dir}/train/runs/2025-05-18_23-40-16/conditional_flow_matching_mri/9lnrq9rz/checkpoints/epoch=234-step=597605.ckpt
+# ckpt_path: ${paths.log_dir}/train/runs/2025-05-18_23-40-16/conditional_flow_matching_mri/9lnrq9rz/checkpoints/epoch=234-step=597605.ckpt
 # seed for random number generators in pytorch, numpy and python.random
 seed: null
